@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  username String @db.VarChar(100)
+  email String @unique @db.VarChar(100)
+  passwordHash String @db.VarChar(350)
+
+  userBoards UserBoard[]
+  tasks Task[] @relation("UserTasks")
+}
+
+model Board {
+  id String @id @default(ulid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title String @db.VarChar(100)
+  description String @db.VarChar(500)
+
+  userBoards UserBoard[]
+  column Column[]
+}
+
+model UserBoard {
+  userId String
+  boardId String
+  role String @default("member")
+
+  user User @relation(fields: [userId], references: [id])
+  board Board @relation(fields: [boardId], references: [id])
+
+  @@id([userId, boardId])
+}
+
+model Column {
+  id String @id @default(ulid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title String @db.VarChar(100)
+
+  boardId String
+  board Board @relation(fields: [boardId], references: [id])
+  tasks Task[]
+}
+
+model Task {
+  id String @id @default(ulid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title String @db.VarChar(100)
+  description String @db.VarChar(500)
+  status String
+  priority Int?
+  position Float @default(0)
+
+  users User[] @relation("UserTasks")
+  columnId String
+  column Column @relation(fields: [columnId], references: [id])
+
+  @@index([columnId, position])
+}
